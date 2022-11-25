@@ -7,11 +7,11 @@ jobs:
   build: 
     uses: ./.github/workflows/build-linux-release.yml
     with:
-      arch: arm64
+      arch: arm
       release: oss
       oss-teleport-ref: tcsc/gha-arm-builds
       ent-teleport-ref: tcsc/gha-arm-builds
-      save-artifacts: false
+      save-artifacts: true
 
 
 
