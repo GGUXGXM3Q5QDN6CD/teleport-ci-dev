@@ -110,6 +110,7 @@ jobs:
             GID=1000
 
       - name: Populate Module Cache
+        if: false
         run: go mod download
 
       - name: Build Release 
