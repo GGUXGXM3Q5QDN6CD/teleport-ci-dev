@@ -33,7 +33,7 @@ on:
     secrets:
       webassets_e_deploy_key:
         description: 'Deployment key to grant access to webassets.e'
-        required: true
+        required: false
 
 jobs:
   build-release-artifacts:
