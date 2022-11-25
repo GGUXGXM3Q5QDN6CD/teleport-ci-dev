@@ -1,0 +1,136 @@
+name: Build Release Tarballs
+on:
+  workflow_call:
+    inputs:
+      oss-teleport-ref:
+        description: 'Git SHA, tag or branch of the revision of OSS teleport to build'
+        required: true
+        type: string
+
+      ent-teleport-ref:
+        description: |
+          Git SHA, tag or branch of the revision of Enterprise teleport to build. Must
+          be supplied for `enterprise` releases
+        required: false
+        type: string
+
+      arch:
+        description: 'CPU architecture to build. Currently supports `arm` and `arm64`'
+        required: true
+        type: string
+
+      release:
+        description: 'Release level to build. Currently supports `oss` and `enterprise`'
+        required: true
+        type: string
+
+      save-artifacts:
+        description: 'Should the build export the build artifacts'
+        required: false
+        type: boolean
+        default: false
+
+    secrets:
+      webassets_e_deploy_key:
+        description: 'Deployment key to grant access to webassets.e'
+        required: true
+
+jobs:
+  build-release-artifacts:
+    permissions:
+      contents: read
+
+    runs-on: [self-hosted, linux, ARM64]
+
+    timeout-minutes: 600 
+
+    env:
+      GOMODCACHE: /tmp/gomodcache
+      GOCACHE: /tmp/gocache
+
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+        # with:
+        #   platforms: linux/${{ inputs.arch }}
+          
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Checkout OSS Teleport
+        uses: actions/checkout@v3
+        with:
+          repository: gravitational/teleport
+          ref: ${{ inputs.oss-teleport-ref }}
+
+      - name: Checkout Enterprise Teleport
+        if: inputs.release == 'enterprise'
+        uses: actions/checkout@v3
+        with:
+          repository: gravitational/teleport.e
+          ref: ${{ inputs.ent-teleport-ref }}
+          path: e
+
+      - name: Determine OSS webassets reference
+        run: echo WEBASSETS_REF=$(git rev-parse @:webassets) >> $GITHUB_ENV
+        
+      - name: Checkout Webassets
+        uses: actions/checkout@v3
+        with:
+          repository: gravitational/webassets
+          path: webassets
+          ref: ${{ env.WEBASSETS_REF }}
+
+      - name: Determine enterprise webassets reference
+        if: inputs.release == 'enterprise'
+        run: echo WEBASSETS_REF=$(git rev-parse @:webassets) >> $GITHUB_ENV
+
+      - name: Checkout Webassets.e
+        if: inputs.release == 'enterprise'
+        uses: actions/checkout@v3
+        with:
+          repository: gravitational/webassets.e
+          path: webassets/e
+          ref: ${{ env.WEBASSETS_E_REF }}
+          ssh-key: ${{ secrets.webassets_e_deploy_key }}
+
+      - name: Build Buildbox
+        uses: docker/build-push-action@v3
+        with:
+          push: false
+          load: true
+          context: build.assets
+          file: ./build.assets/Dockerfile-buildbox-gha
+          platforms: linux/${{ inputs.arch }}
+          tags: teleport-buildbox-${{ inputs.arch }}:latest
+          build-args: |
+            RUST_VERSION=1.64.0
+            GOLANG_VERSION=go1.19.2
+            UID=1000
+            GID=1000
+
+      - name: Populate Module Cache
+        run: go mod download
+
+      - name: Build Release 
+        run: |
+          docker run                                                                    \
+              --rm                                                                      \
+              --platform linux/${{ inputs.arch }}                                       \
+              --memory-swap -1                                                          \
+              -h buildbox                                                               \
+              -e GOMODCACHE=${{ env.GOMODCACHE }}                                       \
+              -e GOCACHE=${{ env.GOCACHE }}                                             \
+              -v "/tmp:/tmp"                                                            \
+              -v "${{ github.workspace }}:/go/src/github.com/gravitational/teleport"    \
+              -w /go/src/github.com/gravitational/teleport                              \
+              -u 1000:1000                                                              \
+              teleport-buildbox-${{ inputs.arch }}:latest                               \
+            make -C build.assets release-${{ inputs.release }} ARCH=${{ inputs.arch }}
+
+      - name: Archive artifacts
+        if: ${{ inputs.save-artifacts }}
+        uses: actions/upload-artifact@v3
+        with:
+          path: ./*.tar.gz
+          retention-days: 1
