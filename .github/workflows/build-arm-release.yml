@@ -10,8 +10,3 @@ jobs:
       arch: arm
       release: oss
       oss-teleport-ref: tcsc/gha-arm-builds
-      ent-teleport-ref: tcsc/gha-arm-builds
-      save-artifacts: true
-
-
-

@@ -1,4 +1,4 @@
-name: Build Release Tarballs
+name: Build Release Artefacts
 on:
   workflow_call:
     inputs:
@@ -9,9 +9,11 @@ on:
 
       ent-teleport-ref:
         description: |
-          Git SHA, tag or branch of the revision of Enterprise teleport to build. Must
-          be supplied for `enterprise` releases
+          Git SHA, tag or branch of the revision of Enterprise teleport to build. If no 
+          value is supplied this workflow will use whatever reference is specified in 
+          the OSS teleport ubmodule record.
         required: false
+        default: ""
         type: string
 
       arch:
@@ -33,16 +35,14 @@ on:
     secrets:
       webassets_e_deploy_key:
         description: 'Deployment key to grant access to webassets.e'
-        required: false
+        required: true
 
 jobs:
   build-release-artifacts:
     permissions:
       contents: read
 
-    runs-on: [self-hosted, linux, ARM64]
-
-    timeout-minutes: 600 
+    runs-on: ubuntu-latest
 
     env:
       GOMODCACHE: /tmp/gomodcache
@@ -51,8 +51,8 @@ jobs:
     steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
-        # with:
-        #   platforms: linux/${{ inputs.arch }}
+        with:
+          platforms: linux/${{ inputs.arch }}
           
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -63,12 +63,21 @@ jobs:
           repository: gravitational/teleport
           ref: ${{ inputs.oss-teleport-ref }}
 
+      - name: Determine Enterprise Teleport reference
+        if: inputs.release == 'enterprise'
+        run: |
+          if [[ -z "${{ inputs.ent-teleport-ref }}" ]]; then
+            echo TELEPORT_E_REF=$(git rev-parse @:e) >> $GITHUB_ENV
+          else
+            echo TELEPORT_E_REF=${{ inputs.ent-teleport-ref }} >> $GITHUB_ENV
+          fi
+
       - name: Checkout Enterprise Teleport
         if: inputs.release == 'enterprise'
         uses: actions/checkout@v3
         with:
-          repository: gravitational/teleport.e
-          ref: ${{ inputs.ent-teleport-ref }}
+          repository: gravitational/gha-playground-teleport.e # TODO: restore to teleport.e
+          ref: ${{ env.TELEPORT_E_REF }}
           path: e
 
       - name: Determine OSS webassets reference
@@ -110,7 +119,6 @@ jobs:
             GID=1000
 
       - name: Populate Module Cache
-        if: false
         run: go mod download
 
       - name: Build Release 
