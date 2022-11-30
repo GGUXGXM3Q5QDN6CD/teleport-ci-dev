@@ -42,7 +42,7 @@ jobs:
     permissions:
       contents: read
 
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, arm64]
 
     env:
       GOMODCACHE: /tmp/gomodcache
