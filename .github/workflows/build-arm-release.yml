@@ -1,12 +1,37 @@
-name: Build Teleport for ARM devices
+name: Build ARM64 Artifacts
 on: 
-  push:
-    branches:
-      - tcsc/gha-arm-builds
+  workflow_dispatch:
+    inputs:
+      oss-teleport-ref:
+        description: 'Tag, branch or reference to OSS teleport to build'
+        type: string
+        required: true
+
+      upload-artifacts:
+        description: 'Should the workflow upload the resulting artifacts to the Release staging area'
+        type: boolean
+        default: false
 jobs:
-  build: 
-    uses: ./.github/workflows/build-linux-release.yml
+  build:
+    strategy:
+      matrix: 
+        release: ['oss']
+    uses: ./.github/workflows/build-artifacts.yml
     with:
-      arch: arm
-      release: oss
-      oss-teleport-ref: tcsc/gha-arm-builds
+      arch: arm64
+      release: ${{ matrix.release }}
+      oss-teleport-ref: ${{ inputs.oss-teleport-ref }} 
+      save-artifacts: ${{ inputs.upload-artifacts }}
+    secrets:
+      webassets_e_deploy_key: ${{ secrets.WEBASSETS_DEPLOY_KEY }}
+
+  upload:
+    if: ${{ inputs.upload-artifacts }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3 
+
+      - name: Copy artifacts to staging area
+        run: tree .
