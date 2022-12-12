@@ -17,6 +17,9 @@ jobs:
       matrix: 
         release: ['oss']
         platform: ['amd64']
+        include:
+          - platform: 'arm64'
+            builder: ['self-hosted', 'linux', 'arm64']
 
     uses: ./.github/workflows/build-linux-generic.yml
     with:
@@ -24,7 +27,7 @@ jobs:
       release: ${{ matrix.release }}
       oss-teleport-ref: ${{ inputs.oss-teleport-ref }} 
       save-artifacts: ${{ inputs.upload-artifacts }}
-      builder: ${{ toJSON(matrix.platform.builder) }}
+      builder: ${{ toJSON(matrix.builder) }}
     secrets:
       webassets_e_deploy_key: ${{ secrets.WEBASSETS_DEPLOY_KEY }}
 
