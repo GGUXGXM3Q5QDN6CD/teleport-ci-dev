@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix: 
         release: ['oss']
-        platform: [amd64]
+        platform: ['amd64']
 
     uses: ./.github/workflows/build-linux-generic.yml
     with:
