@@ -33,6 +33,9 @@ on:
         default: false
 
       builder:
+        # This needs to be encoded as JSON, as parameters can opnly be strings, numbers
+        # or booleans, and we need to pass an array if we're running on a self-hosted 
+        # builder
         description: 'JSON-encoded tags decribing the builder to run the build on'
         required: true
         type: string
@@ -47,8 +50,6 @@ jobs:
     permissions:
       contents: read
 
-    # TODO(tcsc): work out how we can pass this in for both self-hosted and 
-    # gh-hosted runners
     runs-on: ${{ fromJSON(inputs.builder) }}
 
     env:

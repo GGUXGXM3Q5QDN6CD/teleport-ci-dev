@@ -16,9 +16,9 @@ jobs:
     strategy:
       matrix: 
         release: ['oss']
-        platform: ['arm64']
+        arch: ['arm64']
         include:
-          - platform: 'arm64'
+          - arch: 'arm64'
             builder: ['self-hosted', 'linux', 'arm64']
 
     uses: ./.github/workflows/build-linux-generic.yml
