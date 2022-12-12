@@ -1,4 +1,4 @@
-name: Build Release Artefacts
+name: Build Generic Linux
 on:
   workflow_call:
     inputs:
@@ -32,28 +32,28 @@ on:
         type: boolean
         default: false
 
+      builder:
+        description: 'Tags decribing the builder to run the build on'
+        required: true
+        type: string
+
     secrets:
       webassets_e_deploy_key:
         description: 'Deployment key to grant access to webassets.e'
-        required: false
+        required: true
 
 jobs:
   build-release-artifacts:
     permissions:
       contents: read
 
-    runs-on: [self-hosted, linux, arm64]
+    runs-on: ${{ fromJSON(inputs.builder) }}
 
     env:
       GOMODCACHE: /tmp/gomodcache
       GOCACHE: /tmp/gocache
 
-    steps:
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
-        with:
-          platforms: linux/${{ inputs.arch }}
-          
+    steps:         
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 

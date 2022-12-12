@@ -16,12 +16,14 @@ jobs:
     strategy:
       matrix: 
         release: ['oss']
-    uses: ./.github/workflows/build-artifacts.yml
+        platform: [ {arch: amd64, builder: [self-hosted, Linux, AMD64] } ] 
+    uses: ./.github/workflows/build-linux-generic.yml
     with:
-      arch: arm64
+      arch: ${{ matrix.platform.builder }}
       release: ${{ matrix.release }}
       oss-teleport-ref: ${{ inputs.oss-teleport-ref }} 
       save-artifacts: ${{ inputs.upload-artifacts }}
+      builder: ${{ toJSON(matrix.platform.builder) }}
     secrets:
       webassets_e_deploy_key: ${{ secrets.WEBASSETS_DEPLOY_KEY }}
 
