@@ -49,7 +49,7 @@ jobs:
 
     # TODO(tcsc): work out how we can pass this in for both self-hosted and 
     # gh-hosted runners
-    runs-on: ${{ fromJSON(input.builder) }}
+    runs-on: ${{ fromJSON(inputs.builder) }}
 
     env:
       GOMODCACHE: /tmp/gomodcache
