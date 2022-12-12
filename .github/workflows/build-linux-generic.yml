@@ -121,9 +121,6 @@ jobs:
             UID=1000
             GID=1000
 
-      - name: Populate Module Cache
-        run: go mod download
-
       - name: Build Release 
         run: |
           docker run                                                                    \
