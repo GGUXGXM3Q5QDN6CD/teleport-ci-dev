@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix: 
         release: ['oss']
-        platform: ['amd64']
+        platform: ['arm64']
         include:
           - platform: 'arm64'
             builder: ['self-hosted', 'linux', 'arm64']
