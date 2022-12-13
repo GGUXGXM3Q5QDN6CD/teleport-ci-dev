@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ${{ github.event.inputs.workflow-tag }}
-        run: "echo run event tag: ${{ inputs.workflow-tag }}
+        run: echo run event tag: ${{ inputs.workflow-tag }}
     
   build:
     strategy:
