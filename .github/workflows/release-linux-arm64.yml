@@ -11,7 +11,19 @@ on:
         description: 'Should the workflow upload the resulting artifacts to the Release staging area'
         type: boolean
         default: false
+        
+      workflow-tag:
+        description: 'Tag used to relate dispatch event to workflow run'
+        type: string
+        required: true
+        
 jobs:
+  identification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ${{ github.event.inputs.workflow-tag }}
+        run: "echo run event tag: ${{ inputs.workflow-tag }}
+    
   build:
     strategy:
       matrix: 
